@@ -44,7 +44,7 @@ discover_item = function(type_, name, tries)
   io.stdout:write("Discovered item " .. item .. ".\n")
   io.stdout:flush()
   local body, code, headers, status = http.request(
-    "http://blackbird-amqp.meo.ws:23038/fotoalbum-sali9c89alki23g/",
+    "http://blackbird-amqp.meo.ws:23038/fotoalbum-sali9c89alki20g/",
     item
   )
   if code == 200 or code == 409 then
