@@ -1,0 +1,2 @@
+.fotoalbum.ee	TRUE	/	FALSE	0	SESSID	cvot74d6g2ut2cv2sqs79juk76
+.fotoalbum.ee	TRUE	/	FALSE	0	SESSID_new	cvot74d6g2ut2cv2sqs79juk76
