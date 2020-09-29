@@ -135,6 +135,7 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     url_ = string.match(url_, "^(.-)%s*$")
     url_ = string.match(url_, "^(.-)%??$")
     url_ = string.match(url_, "^(.-)&?$")
+    url_ = string.match(url_, "^(.-)/?$")
     if (downloaded[url_] ~= true and addedtolist[url_] ~= true)
       and allowed(url_, origurl) then
       table.insert(urls, { url=url_ })
@@ -255,7 +256,7 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     return wget.actions.ABORT
   end
 
-  if status_code ~= 200 and status_code ~= 302 then
+  if status_code ~= 200 then
     io.stdout:write("Server returned " .. http_stat.statcode .. " (" .. err .. "). Sleeping.\n")
     io.stdout:flush()
     local maxtries = 12
