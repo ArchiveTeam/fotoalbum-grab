@@ -1,7 +1,6 @@
 dofile("table_show.lua")
 dofile("urlcode.lua")
 local urlparse = require("socket.url")
-local http = require("socket.http")
 
 local item_value = os.getenv('item_value')
 local item_type = os.getenv('item_type')
@@ -32,50 +31,12 @@ read_file = function(file)
   end
 end
 
-discover_item = function(type_, name, tries)
-  if tries == nil then
-    tries = 0
-  end
-  name = urlparse.escape(urlparse.unescape(name))
-  item = type_ .. ':' .. name
-  if discovered[item] then
-    return true
-  end
-  io.stdout:write("Discovered item " .. item .. ".\n")
-  io.stdout:flush()
-  local body, code, headers, status = http.request(
-    "http://blackbird-amqp.meo.ws:23038/fotoalbum-sali9c89alki20g/",
-    item
-  )
-  if code == 200 or code == 409 then
-    discovered[item] = true
-    return true
-  elseif code == 404 then
-    io.stdout:write("Project key not found.\n")
-    io.stdout:flush()
-  elseif code == 400 then
-    io.stdout:write("Bad format.\n")
-    io.stdout:flush()
-  else
-    io.stdout:write("Could not queue discovered item. Retrying...\n")
-    io.stdout:flush()
-    if tries == 10 then
-      io.stdout:write("Maximum retries reached for sending discovered item.\n")
-      io.stdout:flush()
-    else
-      os.execute("sleep " .. math.pow(2, tries))
-      return discover_item(type_, name, tries + 1)
-    end
-  end
-  abortgrab = true
-  return false
-end
-
 allowed = function(url, parenturl)
   if string.match(urlparse.unescape(url), "[<>\\%*%$;%^%[%],%(%){}]")
     or string.match(url, "^https?://[^/]*twitter%.com/")
     or string.match(url, "^https?://[^/]*facebook%.com/")
-    or string.match(url, "^https?://keskus%.ee/login%.php%?") then
+    or string.match(url, "^https?://keskus%.ee/login%.php%?")
+    or string.match(url, "^https?://fotoalbum%.ee/popup%.php%?type=share&pic=") then
     return false
   end
 
@@ -90,13 +51,15 @@ allowed = function(url, parenturl)
     tested[s] = tested[s] + 1
   end
 
-  local match = string.match(url, "^https?://fotoalbum%.ee/photos/([^/%?&]+)$")
+  local match = string.match(url, "^https?://static[0-9]*%.fotoalbum%.ee/.+/([0-9]+)[^/]+$")
   if match then
-    discover_item("user", match)
-  end
-
-  if string.match(url, "^https?://static[0-9]*%.[^%.]+%.ee/") then
-    return true
+    for id, _ in pairs(ids) do
+      if string.match(match, "^" .. id)
+        or string.match(match, "^0" .. id)
+        or string.match(match, "^1" .. id) then
+        return true
+      end
+    end
   end
 
   for s in string.gmatch(url, "([0-9]+)") do
@@ -109,15 +72,6 @@ allowed = function(url, parenturl)
 end
 
 wget.callbacks.download_child_p = function(urlpos, parent, depth, start_url_parsed, iri, verdict, reason)
-  local url = urlpos["url"]["url"]
-  local html = urlpos["link_expect_html"]
-
-  if (downloaded[url] ~= true and addedtolist[url] ~= true)
-    and allowed(url, parent["url"]) then
-    addedtolist[url] = true
-    return true
-  end
-  
   return false
 end
 
@@ -184,6 +138,16 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
     end
   end
 
+  local a, b, c = string.match(url, "^(https?://static[0-9]*%.fotoalbum%.ee/.+/)([0-9]+)([^/]+)$")
+  if a and b and c then
+    local b_ = string.match(b, "^[01](.+)")
+    if b_ then
+      check(a .. b_ .. c)
+    end
+    check(a .. "0" .. b .. c)
+    check(a .. "1" .. b .. c)
+  end
+
   if allowed(url, nil) and status_code == 200
     and not string.match(url, "^https?://static[0-9]*%.[^%.]+%.ee/") then
     html = read_file(file)
@@ -232,7 +196,10 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
   io.stdout:write(url_count .. "=" .. status_code .. " " .. url["url"] .. "  \n")
   io.stdout:flush()
 
-  local match = string.match(url["url"], "^https?://fotoalbum%.ee/popup%.php%?type=share&pic=([0-9]+)$")
+  local match = string.match(url["url"], "^https?://fotoalbum%.ee/photos/[^/]+/([0-9]+)/?$")
+  if not match then
+    match = string.match(url["url"], "^https?://fotoalbum%.ee/photos/[^/]+/sets/([0-9]+)/?$")
+  end
   if match then
     ids[match] = true
   end

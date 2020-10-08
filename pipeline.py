@@ -49,7 +49,7 @@ if not WGET_AT:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20200929.03'
+VERSION = '20201008.01'
 USER_AGENT = 'Archive Team'
 TRACKER_ID = 'fotoalbum'
 TRACKER_HOST = 'trackerproxy.archiveteam.org'
@@ -187,11 +187,17 @@ class WgetArgs(object):
         item['item_type'] = item_type
         item['item_value'] = item_value
 
-        if item_type == 'photos':
-            start, end = item_value.split('-')
-            for i in range(int(start), int(end)+1):
-                wget_args.extend(['--warc-header', 'fotoalbum-image: ' + str(i)])
-                wget_args.append('https://fotoalbum.ee/popup.php?type=share&pic=' + str(i))
+        if item_type == 'set':
+            user, id_ = item_value.split(';')
+            wget_args.extend(['--warc-header', 'fotoalbum-set: ' + id_])
+            wget_args.append('https://fotoalbum.ee/photos/{}/sets/{}'
+                             .format(user, id_))
+        elif item_type == 'photos':
+            for photo in item_value.split(','):
+                user, id_ = photo.split(';')
+                wget_args.extend(['--warc-header', 'fotoalbum-photo: ' + id_])
+                wget_args.append('https://fotoalbum.ee/photos/{}/{}'
+                                 .format(user, id_))
         else:
             raise ValueError('item_type not supported.')
 
@@ -242,7 +248,7 @@ pipeline = Pipeline(
         },
         id_function=stats_id_function,
     ),
-    MoveFiles(),
+    #MoveFiles(),
     LimitConcurrent(NumberConfigValue(min=1, max=20, default='2',
         name='shared:rsync_threads', title='Rsync threads',
         description='The maximum number of concurrent uploads.'),
