@@ -156,6 +156,10 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
       io.stdout:flush()
       abortgrab = true
     end
+    if string.match(url, "/sets/[0-9]+%?page=[0-9]+$")
+      and not string.match(html, "static[0-9]*%.fotoalbum%.ee") then
+      return {}
+    end
     for newurl in string.gmatch(string.gsub(html, "&quot;", '"'), '([^"]+)') do
       checknewurl(newurl)
     end
