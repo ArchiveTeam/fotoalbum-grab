@@ -1,2 +1,2 @@
-.fotoalbum.ee	TRUE	/	FALSE	0	SESSID	115ldpodcb0ksq788o64tes3s1
-.fotoalbum.ee	TRUE	/	FALSE	0	SESSID_new	115ldpodcb0ksq788o64tes3s1
+.fotoalbum.ee	TRUE	/	FALSE	0	SESSID	04pbkqk88n1f4r1nmqma7s7qu3
+.fotoalbum.ee	TRUE	/	FALSE	0	SESSID_new	04pbkqk88n1f4r1nmqma7s7qu3
