@@ -227,7 +227,7 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     return wget.actions.ABORT
   end
 
-  if status_code ~= 200 then
+  if status_code ~= 200 and status_code ~= 404 then
     io.stdout:write("Server returned " .. http_stat.statcode .. " (" .. err .. "). Sleeping.\n")
     io.stdout:flush()
     local maxtries = 12
